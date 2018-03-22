@@ -28,24 +28,26 @@ property :notification,  Symbol, required: true, default: :reload
 
 action :grant do
   with_run_context :root do # ~FC037
+    # The wrong cookbook will be referenced unless we do this
+    res = new_resource
     edit_resource(:template, "#{conf_dir}/pg_hba.conf") do |new_resource|
-      source new_resource.source
-      cookbook new_resource.cookbook
+      source res.source
+      cookbook res.cookbook
       owner 'postgres'
       group 'postgres'
       mode '0600'
       variables[:pg_hba] ||= {}
-      variables[:pg_hba][new_resource.name] = {
-        comment: new_resource.comment,
-        type: new_resource.access_type,
-        db: new_resource.access_db,
-        user: new_resource.access_user,
-        addr: new_resource.access_addr,
-        method: new_resource.access_method,
+      variables[:pg_hba][res.name] = {
+        comment: res.comment,
+        type: res.access_type,
+        db: res.access_db,
+        user: res.access_user,
+        addr: res.access_addr,
+        method: res.access_method,
       }
       action :nothing
       delayed_action :create
-      notifies new_resource.notification, postgresql_service
+      notifies res.notification, postgresql_service
     end
   end
 end
